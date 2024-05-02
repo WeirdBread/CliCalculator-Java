@@ -62,7 +62,7 @@ public class Tokenizer {
                     result.add(new OperandToken(Double.parseDouble(t)));
                     break;
                 case String t when t.equals("-") && (result.isEmpty()
-                        || !(result.getLast() instanceof OperandToken) || !(result.getLast() instanceof CloseParenthesisToken)):
+                        || !((result.getLast() instanceof OperandToken) || (result.getLast() instanceof CloseParenthesisToken))):
                     result.add(new UnaryOperatorToken());
                     break;
                 case String t when Arrays.asList(BinaryOperatorToken.operatorSymbols).contains(t):
