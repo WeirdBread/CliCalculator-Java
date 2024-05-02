@@ -44,8 +44,7 @@ public class DiceToken implements IOperator{
         return this.getSymbol();
     }
 
-    public DiceEvalutationResult rollDice(int diceToRoll, int edges){
-        Random rnd = new Random();
+    public DiceEvalutationResult rollDice(Random rnd, int diceToRoll, int edges){
         DiceEvalutationResult result = new DiceEvalutationResult();
         for (int i = 0; i < diceToRoll; i++){
             int rollResult = rnd.nextInt(edges) + 1;

@@ -5,20 +5,27 @@ import Tokenizer.OperandToken;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 public class DiceEvaluator {
 
-    public static DiceEvalutationResult evaluateDice(DiceToken diceToken, OperandToken leftOperand, OperandToken rightOperand){
+    public DiceEvaluator(Random rnd){
+        this.rnd = rnd;
+    }
+
+    private final Random rnd;
+
+    public DiceEvalutationResult evaluateDice(DiceToken diceToken, OperandToken leftOperand, OperandToken rightOperand){
         return evaluateDice(diceToken, leftOperand == null ? 1 : (int) leftOperand.getNumber(), rightOperand == null ? 1 : (int) rightOperand.getNumber(), diceToken.modificators);
     }
 
-    private static DiceEvalutationResult evaluateDice(
+    private DiceEvalutationResult evaluateDice(
             DiceToken diceToken,
             int diceToRoll,
             int edges,
             List<DiceToken.DiceModificator> modificators){
-        DiceEvalutationResult rollResult = diceToken.rollDice(diceToRoll, edges);
+        DiceEvalutationResult rollResult = diceToken.rollDice(this.rnd, diceToRoll, edges);
 
         List<DiceToken.DiceModificator> orderedModificators = modificators.stream().sorted((x, y) -> y.getPriority() - x.getPriority()).collect(Collectors.toList());
 
@@ -68,7 +75,7 @@ public class DiceEvaluator {
                     }
                     int dicesToExplode = (int) rollResult.diceRolled.getPrimaryGroup().stream().filter(x -> x == edges).count();
                     while (dicesToExplode > 0){
-                        DiceEvalutationResult newRoll = diceToken.rollDice(dicesToExplode, edges);
+                        DiceEvalutationResult newRoll = diceToken.rollDice(this.rnd, dicesToExplode, edges);
                         dicesToExplode = (int) newRoll.diceRolled.getPrimaryGroup().stream().filter(x -> x == edges).count();
                         rollResult.diceRolled.getPrimaryGroup().addAll(newRoll.diceRolled.getPrimaryGroup());
                         rollResult.sum += newRoll.sum;

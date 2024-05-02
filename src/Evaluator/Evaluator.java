@@ -5,6 +5,7 @@ import Tokenizer.*;
 import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Stack;
 
 public class Evaluator {
@@ -21,9 +22,13 @@ public class Evaluator {
         return this._diceResults;
     }
 
-    public double EvaluateExpression() throws OperationNotSupportedException {
+    public double EvaluateExpression(Long seed) throws OperationNotSupportedException {
         Stack<IToken> stack = new Stack<IToken>();
-
+        Random rnd = new Random();
+        if (seed != null){
+            rnd.setSeed(seed);
+        }
+        DiceEvaluator diceEvaluator = new DiceEvaluator(rnd);
         for (IToken token: tokens) {
             switch (token.getTokenType()){
                 case Operand:
@@ -59,7 +64,7 @@ public class Evaluator {
                     rightOperand = ((DiceToken)token).getHasStaticEdges() ? null :(OperandToken) stack.pop();
                     leftOperand = ((DiceToken)token).getIsSingleDie() ? null : (OperandToken) stack.pop();
 
-                    DiceEvalutationResult diceResult = DiceEvaluator.evaluateDice((DiceToken) token, leftOperand, rightOperand);
+                    DiceEvalutationResult diceResult = diceEvaluator.evaluateDice((DiceToken) token, leftOperand, rightOperand);
                     this._diceResults.add(diceResult);
                     stack.push(new OperandToken(diceResult.sum));
                 break;

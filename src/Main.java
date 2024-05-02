@@ -30,7 +30,7 @@ public class Main {
 
             Evaluator evaluator = new Evaluator(polishTokens);
             DecimalFormat format = new DecimalFormat("0.#", new DecimalFormatSymbols(Locale.US));
-            System.out.println(format.format(evaluator.EvaluateExpression()));
+            System.out.println(format.format(evaluator.EvaluateExpression(null)));
 
             System.out.println(String.join("; ", evaluator.getDiceResults().stream().map(Object::toString).collect(Collectors.toList())));
         }

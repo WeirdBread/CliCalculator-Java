@@ -10,8 +10,7 @@ public class FudgeDiceToken extends DiceToken{
     }
 
     @Override
-    public DiceEvalutationResult rollDice(int diceToRoll, int edges){
-        Random rnd = new Random();
+    public DiceEvalutationResult rollDice(Random rnd, int diceToRoll, int edges){
         DiceEvalutationResult result = new DiceEvalutationResult();
         for (int i = 0; i < diceToRoll; i++){
             int rollResult = rnd.nextInt(3) - 1;
