@@ -45,10 +45,10 @@ public class DiceToken implements IOperator{
     }
 
     public DiceEvalutationResult rollDice(int diceToRoll, int edges){
-        var rnd = new Random();
-        var result = new DiceEvalutationResult();
-        for (var i = 0; i < diceToRoll; i++){
-            var rollResult = rnd.nextInt(1, edges+1);
+        Random rnd = new Random();
+        DiceEvalutationResult result = new DiceEvalutationResult();
+        for (int i = 0; i < diceToRoll; i++){
+            int rollResult = rnd.nextInt(edges) + 1;
             result.diceRolled.add(rollResult);
             result.sum += rollResult;
         }
@@ -61,19 +61,27 @@ public class DiceToken implements IOperator{
     }
 
     public DiceModificator addModificator(String modificator, Integer param){
-        var newModificator = switch (modificator){
-            case "kh" -> new DiceModificator(DiceModificatorType.KeepHigh, param, false);
-            case "kl" -> new DiceModificator(DiceModificatorType.KeepLow, param, false);
-            case "rkh" -> new DiceModificator(DiceModificatorType.RerollKeepHigh, param, true);
-            case "rkl" -> new DiceModificator(DiceModificatorType.RerollKeepLow, param, true);
-            case "!" -> new DiceModificator(DiceModificatorType.Explosive, param, true);
-            case "<" -> new DiceModificator(DiceModificatorType.LessThan, param, false);
-            case ">" -> new DiceModificator(DiceModificatorType.MoreThan, param, false);
-            default -> null;
+        DiceModificator newModificator = null;
+        switch (modificator){
+            case "kh": newModificator = new DiceModificator(DiceModificatorType.KeepHigh, param, false);
+            break;
+            case "kl": newModificator = new DiceModificator(DiceModificatorType.KeepLow, param, false);
+            break;
+            case "rkh": newModificator = new DiceModificator(DiceModificatorType.RerollKeepHigh, param, true);
+            break;
+            case "rkl": newModificator = new DiceModificator(DiceModificatorType.RerollKeepLow, param, true);
+            break;
+            case "!": newModificator = new DiceModificator(DiceModificatorType.Explosive, param, true);
+            break;
+            case "<": newModificator = new DiceModificator(DiceModificatorType.LessThan, param, false);
+            break;
+            case ">": newModificator = new DiceModificator(DiceModificatorType.MoreThan, param, false);
+            break;
         };
 
         if (newModificator != null) {
-            if (this.modificators.stream().anyMatch(x -> x.getPriority() == newModificator.getPriority())){
+            DiceModificator finalNewModificator = newModificator;
+            if (this.modificators.stream().anyMatch(x -> x.getPriority() == finalNewModificator.getPriority())){
                 return null;
             }
             this.modificators.add(newModificator);
@@ -106,14 +114,21 @@ public class DiceToken implements IOperator{
             return this._isLeftOriented;
         }
 
-        private static int calcPriority(DiceModificatorType type){
-            return switch (type){
-                case DiceModificatorType.MoreThan, DiceModificatorType.LessThan -> 0;
-                case DiceModificatorType.KeepHigh, DiceModificatorType.KeepLow -> 1;
-                case DiceModificatorType.RerollKeepHigh, DiceModificatorType.RerollKeepLow -> 2;
-                case DiceModificatorType.Explosive -> 3;
-                default -> -1;
-            };
+        private int calcPriority(DiceModificatorType type){
+            switch (type){
+                case MoreThan:
+                case LessThan:
+                    return 0;
+                case KeepHigh:
+                case KeepLow:
+                    return 1;
+                case RerollKeepHigh:
+                case RerollKeepLow:
+                    return 2;
+                case Explosive:
+                    return 3;
+                default: return -1;
+            }
         }
     }
 
@@ -129,15 +144,15 @@ public class DiceToken implements IOperator{
     }
 
     public static String getDiceModificatorDescription(DiceModificatorType type) {
-        return switch (type) {
-            case KeepHigh -> "kh";
-            case KeepLow -> "kl";
-            case LessThan -> "<";
-            case MoreThan -> ">";
-            case Explosive -> "!";
-            case RerollKeepLow -> "rkl";
-            case RerollKeepHigh -> "rkh";
-            default -> null;
-        };
+        switch (type) {
+            case KeepHigh: return "kh";
+            case KeepLow: return "kl";
+            case LessThan: return "<";
+            case MoreThan: return ">";
+            case Explosive: return "!";
+            case RerollKeepLow: return "rkl";
+            case RerollKeepHigh: return "rkh";
+            default: return null;
+        }
     }
 }

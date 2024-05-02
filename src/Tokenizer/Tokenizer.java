@@ -1,16 +1,13 @@
 package Tokenizer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 public class Tokenizer {
     private final ArrayList<String> tokens = new ArrayList<String>();
 
     public Tokenizer(String input){
-        var buffer = new Buffer();
-        var expression = input.toCharArray();
+        Buffer buffer = new Buffer();
+        char[] expression = input.toCharArray();
         for (int i = 0; i < expression.length; i++) {
             if (Character.isWhitespace(expression[i])){
                 if (buffer.bufferString != null){
@@ -19,9 +16,9 @@ public class Tokenizer {
                 continue;
             }
 
-            var charIsDigit = Character.isDigit(expression[i]);
-            var charIsLetter = Character.isLetter(expression[i]);
-            var charIsPoint = expression[i] == '.';
+            boolean charIsDigit = Character.isDigit(expression[i]);
+            boolean charIsLetter = Character.isLetter(expression[i]);
+            boolean charIsPoint = expression[i] == '.';
 
             if ((charIsDigit || charIsLetter || charIsPoint) && expression[i] != 'd'){
                 if (buffer.bufferString == null){
@@ -54,65 +51,75 @@ public class Tokenizer {
     }
 
     public  ArrayList<IToken> getResult() throws IllegalArgumentException{
-        var result = new ArrayList<IToken>();
+        ArrayList<IToken> result = new ArrayList<IToken>();
         Integer diceModBuffer = null;
         for (int i = 0; i < this.tokens.size(); i++) {
-            switch (this.tokens.get(i)){
-                case String t when tryParseDouble(t) != null && getDiceTokenIfLast(result) == null:
-                    result.add(new OperandToken(Double.parseDouble(t)));
-                    break;
-                case String t when t.equals("-") && (result.isEmpty()
-                        || !(result.getLast() instanceof OperandToken) || !(result.getLast() instanceof CloseParenthesisToken)):
-                    result.add(new UnaryOperatorToken());
-                    break;
-                case String t when Arrays.asList(BinaryOperatorToken.operatorSymbols).contains(t):
-                    result.add(new BinaryOperatorToken(t));
-                    break;
-                case "(":
-                    result.add(new OpenParenthesisToken());
-                    break;
-                case ")":
-                    result.add(new CloseParenthesisToken());
-                    break;
-                case String t when t.startsWith("dF"):
-                    var isSingleDie = result.isEmpty() || !(result.getLast() instanceof OperandToken);
-                    result.add(new FudgeDiceToken(isSingleDie));
-                    addDiceModificators(t.substring(2), result, diceModBuffer);
-                    break;
-                case "d":
-                    isSingleDie = result.isEmpty() || !(result.getLast() instanceof OperandToken);
-                    result.add(new DiceToken(isSingleDie, false));
-                    break;
-                case String t when Arrays.stream(DiceToken.availableModifiersTags).anyMatch(t::contains):
-                    addDiceModificators(t, result, diceModBuffer);
-                    break;
-                case String t when tryParseInt(t) != null:
-                    var prevDiceToken = getDiceTokenIfLast(result);
-                    if (prevDiceToken != null){
-                        var diceMod = prevDiceToken.modificators.isEmpty() ? null : prevDiceToken.modificators.getLast();
-                        if (diceMod != null && !diceMod.getIsLeftOriented()){
-                            diceMod.param = Integer.parseInt(t);
-                            break;
-                        }
-                        diceModBuffer = Integer.parseInt(t);
-                    }
-                    break;
-                default:
-                    throw new IllegalArgumentException(String.format("Unexpected token: '%s', pos: %d:%d", this.tokens.get(i), i+1, i+1+this.tokens.get(i).length()));
-            }
+            diceModBuffer = fillTokens(result, this.tokens, i, diceModBuffer);
         }
-
         return  result;
     }
 
+    private Integer fillTokens(ArrayList<IToken> tokens, ArrayList<String> stringTokens, int index, Integer diceModBuffer){
+        String t = stringTokens.get(index);
+        if (tryParseDouble(t) != null && getDiceTokenIfLast(tokens) == null){
+            tokens.add(new OperandToken(Double.parseDouble(t)));
+            return diceModBuffer;
+        }
+        if (t.equals("-") && (tokens.isEmpty()
+                || !((tokens.get(tokens.size()-1) instanceof OperandToken) || (tokens.get(tokens.size()-1) instanceof CloseParenthesisToken)))) {
+            tokens.add(new UnaryOperatorToken());
+            return diceModBuffer;
+        }
+        if (Arrays.asList(BinaryOperatorToken.operatorSymbols).contains(t)){
+            tokens.add(new BinaryOperatorToken(t));
+            return diceModBuffer;
+        }
+        if (t.equals("(")){
+            tokens.add(new OpenParenthesisToken());
+            return diceModBuffer;
+        }
+        if (t.equals(")")){
+            tokens.add(new CloseParenthesisToken());
+            return diceModBuffer;
+        }
+        if (t.startsWith("dF")){
+            boolean isSingleDie = tokens.isEmpty() || !(tokens.get(tokens.size()-1) instanceof OperandToken);
+            tokens.add(new FudgeDiceToken(isSingleDie));
+            addDiceModificators(t.substring(2), tokens, diceModBuffer);
+            return null;
+        }
+        if (t.equals("d")){
+            boolean isSingleDie = tokens.isEmpty() || !(tokens.get(tokens.size()-1) instanceof OperandToken);
+            tokens.add(new DiceToken(isSingleDie, false));
+            return diceModBuffer;
+        }
+        if (Arrays.stream(DiceToken.availableModifiersTags).anyMatch(t::contains)){
+            addDiceModificators(t, tokens, diceModBuffer);
+            return null;
+        }
+        if (tryParseInt(t) != null) {
+            DiceToken prevDiceToken = getDiceTokenIfLast(tokens);
+            if (prevDiceToken != null){
+                DiceToken.DiceModificator diceMod = prevDiceToken.modificators.isEmpty() ? null : prevDiceToken.modificators.get(prevDiceToken.modificators.size() - 1);
+                if (diceMod != null && !diceMod.getIsLeftOriented()){
+                    diceMod.param = Integer.parseInt(t);
+                    return diceModBuffer;
+                }
+                return Integer.parseInt(t);
+            }
+            return diceModBuffer;
+        }
+        throw new IllegalArgumentException(String.format("Unexpected token: '%s', pos: %d:%d", t, index + 1, index + 1 + t.length()));
+    }
+
     private static ArrayList<String> parseDiceMods(String input){
-        var result = new ArrayList<String>();
-        var mod = Arrays.stream(DiceToken.availableModifiersTags).filter(input::contains).findFirst();
-        if (mod.isEmpty()){
+        ArrayList<String> result = new ArrayList<String>();
+        Optional<String> mod = Arrays.stream(DiceToken.availableModifiersTags).filter(input::contains).findFirst();
+        if (!mod.isPresent()){
             return result;
         }
         result.add(mod.get());
-        var restOfInput = input.substring(mod.get().length());
+        String restOfInput = input.substring(mod.get().length());
         if (!restOfInput.isEmpty()){
             result.addAll(parseDiceMods(restOfInput));
         }
@@ -120,10 +127,10 @@ public class Tokenizer {
     }
 
     private static void addDiceModificators(String input, ArrayList<IToken> tokens, Integer diceModBuffer){
-        var mods = parseDiceMods(input);
-        var prevDiceToken = getDiceTokenIfLast(tokens);
-        for (var mod : mods){
-            var newMod = prevDiceToken.addModificator(mod);
+        ArrayList<String> mods = parseDiceMods(input);
+        DiceToken prevDiceToken = getDiceTokenIfLast(tokens);
+        for (String mod : mods){
+            DiceToken.DiceModificator newMod = prevDiceToken.addModificator(mod);
             if (newMod != null && newMod.getIsLeftOriented()){
                 newMod.param = diceModBuffer;
                 diceModBuffer = null;
@@ -135,14 +142,14 @@ public class Tokenizer {
         if (tokens.isEmpty()){
             return null;
         }
-        var lastToken = tokens.getLast();
-        if (lastToken instanceof DiceToken diceToken && diceToken.getHasStaticEdges()) {
-            return diceToken;
+        IToken lastToken = tokens.get(tokens.size()-1);
+        if (lastToken instanceof DiceToken && ((DiceToken)lastToken).getHasStaticEdges()) {
+            return (DiceToken) lastToken;
         }
         if (tokens.size() > 1){
-            var secondLastToken = tokens.get(tokens.size() - 2);
-            if (secondLastToken instanceof DiceToken diceToken && !diceToken.getHasStaticEdges()){
-                return diceToken;
+            IToken secondLastToken = tokens.get(tokens.size() - 2);
+            if (secondLastToken instanceof DiceToken && !((DiceToken)secondLastToken).getHasStaticEdges()){
+                return (DiceToken) secondLastToken;
             }
         }
         return null;
@@ -171,7 +178,7 @@ public class Tokenizer {
         public boolean isNumber = false;
 
         public String toStringAndClear(){
-            var result = this.bufferString;
+            String result = this.bufferString;
             this.bufferString = null;
             this.isNumber = false;
             return result;

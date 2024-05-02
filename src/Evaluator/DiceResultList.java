@@ -1,6 +1,7 @@
 package Evaluator;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 public class DiceResultList extends ArrayList<ArrayList<Integer>> {
     public DiceResultList(){
@@ -15,7 +16,7 @@ public class DiceResultList extends ArrayList<ArrayList<Integer>> {
     }
 
     public ArrayList<Integer> getLastGroup(){
-        return this.getLast();
+        return this.get(this.size() - 1);
     }
 
     public ArrayList<Integer> addGroup(DiceResultList diceResult){
@@ -29,9 +30,9 @@ public class DiceResultList extends ArrayList<ArrayList<Integer>> {
 
     @Override
     public String toString(){
-        var diceRolledString = new StringBuilder();
-        for (var item : this){
-            diceRolledString.append(String.format("[%s]", String.join(", ", item.stream().map(Object::toString).toList())));
+        StringBuilder diceRolledString = new StringBuilder();
+        for (ArrayList<Integer> item : this){
+            diceRolledString.append(String.format("[%s]", String.join(", ", item.stream().map(Object::toString).collect(Collectors.toList()))));
         }
         return diceRolledString.toString();
     }

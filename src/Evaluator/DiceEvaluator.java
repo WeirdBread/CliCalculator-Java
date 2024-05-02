@@ -5,6 +5,7 @@ import Tokenizer.OperandToken;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DiceEvaluator {
 
@@ -17,58 +18,62 @@ public class DiceEvaluator {
             int diceToRoll,
             int edges,
             List<DiceToken.DiceModificator> modificators){
-        var rollResult = diceToken.rollDice(diceToRoll, edges);
+        DiceEvalutationResult rollResult = diceToken.rollDice(diceToRoll, edges);
 
-        var orderedModificators = modificators.stream().sorted((x, y) -> y.getPriority() - x.getPriority()).toList();
+        List<DiceToken.DiceModificator> orderedModificators = modificators.stream().sorted((x, y) -> y.getPriority() - x.getPriority()).collect(Collectors.toList());
 
-        for (var mod : orderedModificators){
+        for (DiceToken.DiceModificator mod : orderedModificators){
             switch (mod.getType()){
-                case KeepHigh -> {
-                    var diceRolledOrdered = rollResult.diceRolled.getPrimaryGroup().stream().sorted(Comparator.reverseOrder()).toList();
+                case KeepHigh:
+                    List<Integer> diceRolledOrdered = rollResult.diceRolled.getPrimaryGroup().stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList());
                     rollResult.sum = diceRolledOrdered.subList(0, mod.param == null ? 1 : mod.param).stream().mapToInt(a -> a).sum();
-                }
-                case KeepLow -> {
-                    var diceRolledOrdered = rollResult.diceRolled.getPrimaryGroup().stream().sorted().toList();
+                break;
+                case KeepLow:
+                    diceRolledOrdered = rollResult.diceRolled.getPrimaryGroup().stream().sorted().collect(Collectors.toList());
                     rollResult.sum = diceRolledOrdered.subList(0, mod.param == null ? 1 : mod.param).stream().mapToInt(a -> a).sum();
-                }
-                case RerollKeepHigh -> {
-                    var count = 1;
+                break;
+                case RerollKeepHigh:
+                    int count = 1;
                     while (count < (mod.param == null ? 2 : mod.param)){
                         count++;
-                        var newRoll = evaluateDice(diceToken, diceToRoll, edges, modificators.stream().filter(x -> x.getPriority() > mod.getPriority()).toList());
+                        DiceEvalutationResult newRoll = evaluateDice(diceToken, diceToRoll, edges, modificators.stream().filter(x -> x.getPriority() > mod.getPriority()).collect(Collectors.toList()));
                         rollResult.diceRolled.addGroup(newRoll.diceRolled);
                         if (newRoll.sum > rollResult.sum){
                             rollResult.sum = newRoll.sum;
                             rollResult.diceRolled.primaryGroupIndex = rollResult.diceRolled.size() - 1;
                         }
                     }
-                }
-                case RerollKeepLow -> {
-                    var count = 1;
+                break;
+                case RerollKeepLow:
+                    count = 1;
                     while (count < (mod.param == null ? 2 : mod.param)){
                         count++;
-                        var newRoll = evaluateDice(diceToken, diceToRoll, edges, modificators.stream().filter(x -> x.getPriority() > mod.getPriority()).toList());
+                        DiceEvalutationResult newRoll = evaluateDice(diceToken, diceToRoll, edges, modificators.stream().filter(x -> x.getPriority() > mod.getPriority()).collect(Collectors.toList()));
                         rollResult.diceRolled.addGroup(newRoll.diceRolled);
                         if (newRoll.sum < rollResult.sum){
                             rollResult.sum = newRoll.sum;
                             rollResult.diceRolled.primaryGroupIndex = rollResult.diceRolled.size() - 1;
                         }
                     }
-                }
-                case MoreThan -> rollResult.sum = (int) rollResult.diceRolled.getPrimaryGroup().stream().filter(x -> x >= (mod.param == null ? 1 : mod.param)).count();
-                case LessThan -> rollResult.sum = (int) rollResult.diceRolled.getPrimaryGroup().stream().filter(x -> x < (mod.param == null ? 1 : mod.param)).count();
-                case Explosive -> {
+                break;
+                case MoreThan:
+                    rollResult.sum = (int) rollResult.diceRolled.getPrimaryGroup().stream().filter(x -> x >= (mod.param == null ? 1 : mod.param)).count();
+                break;
+                case LessThan:
+                    rollResult.sum = (int) rollResult.diceRolled.getPrimaryGroup().stream().filter(x -> x < (mod.param == null ? 1 : mod.param)).count();
+                break;
+                case Explosive:
                     if (edges <= 1) {
                         break;
                     }
-                    var dicesToExplode = (int) rollResult.diceRolled.getPrimaryGroup().stream().filter(x -> x == edges).count();
+                    int dicesToExplode = (int) rollResult.diceRolled.getPrimaryGroup().stream().filter(x -> x == edges).count();
                     while (dicesToExplode > 0){
-                        var newRoll = diceToken.rollDice(dicesToExplode, edges);
+                        DiceEvalutationResult newRoll = diceToken.rollDice(dicesToExplode, edges);
                         dicesToExplode = (int) newRoll.diceRolled.getPrimaryGroup().stream().filter(x -> x == edges).count();
                         rollResult.diceRolled.getPrimaryGroup().addAll(newRoll.diceRolled.getPrimaryGroup());
                         rollResult.sum += newRoll.sum;
                     }
-                }
+                break;
             }
 
             rollResult.expression += mod.getIsLeftOriented()

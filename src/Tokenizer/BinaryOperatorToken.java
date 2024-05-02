@@ -6,13 +6,18 @@ public class BinaryOperatorToken implements IOperator{
 
     public BinaryOperatorToken(String operatorSymbol){
         this._symbol = operatorSymbol;
-        this._operatorType = switch (operatorSymbol){
-          case "+" -> OperatorType.Sum;
-          case "-" -> OperatorType.Subtract;
-          case "*" -> OperatorType.Multiply;
-          case "/" -> OperatorType.Divide;
-          case "^" -> OperatorType.Power;
-            default -> throw new IllegalArgumentException();
+        switch (operatorSymbol){
+            case "+": this._operatorType = OperatorType.Sum;
+            break;
+            case "-": this._operatorType = OperatorType.Subtract;
+            break;
+            case "*": this._operatorType = OperatorType.Multiply;
+            break;
+            case "/": this._operatorType = OperatorType.Divide;
+            break;
+            case "^": this._operatorType = OperatorType.Power;
+            break;
+            default: throw new IllegalArgumentException();
         };
         this._priority = calcPriority(this._operatorType);
     }
@@ -42,12 +47,17 @@ public class BinaryOperatorToken implements IOperator{
     }
 
     private static int calcPriority(OperatorType operatorType){
-        return switch (operatorType){
-            case OperatorType.Sum, OperatorType.Subtract -> 0;
-            case OperatorType.Multiply, OperatorType.Divide -> 1;
-            case OperatorType.Power -> 3;
-            default -> throw new IllegalArgumentException();
-        };
+        switch (operatorType){
+            case Subtract:
+            case Sum:
+                return 0;
+            case Divide:
+            case Multiply:
+                return 1;
+            case Power:
+                return 3;
+            default: throw new IllegalArgumentException();
+        }
     }
 
     public enum OperatorType{

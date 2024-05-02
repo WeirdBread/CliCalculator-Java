@@ -22,39 +22,51 @@ public class Evaluator {
     }
 
     public double EvaluateExpression() throws OperationNotSupportedException {
-        var stack = new Stack<IToken>();
+        Stack<IToken> stack = new Stack<IToken>();
 
-        for (var token: tokens) {
+        for (IToken token: tokens) {
             switch (token.getTokenType()){
-                case Enums.TokenType.Operand -> stack.push(token);
-                case Enums.TokenType.UnaryOperator -> {
-                    var operand = (OperandToken) stack.pop();
+                case Operand:
+                    stack.push(token);
+                break;
+                case UnaryOperator:
+                    OperandToken operand = (OperandToken) stack.pop();
                     operand.inverse();
                     stack.push(operand);
-                }
-                case Enums.TokenType.BinaryOperator -> {
-                    var rightOperand = (OperandToken) stack.pop();
-                    var leftOperand = (OperandToken) stack.pop();
+                break;
+                case BinaryOperator:
+                    OperandToken rightOperand = (OperandToken) stack.pop();
+                    OperandToken leftOperand = (OperandToken) stack.pop();
                     switch (((BinaryOperatorToken)token).getOperatorType()){
-                        case Sum -> stack.push(new OperandToken(leftOperand.getNumber() + rightOperand.getNumber()));
-                        case Subtract -> stack.push(new OperandToken(leftOperand.getNumber() - rightOperand.getNumber()));
-                        case Multiply -> stack.push(new OperandToken(leftOperand.getNumber() * rightOperand.getNumber()));
-                        case Divide -> stack.push(new OperandToken(leftOperand.getNumber() / rightOperand.getNumber()));
-                        case Power -> stack.push(new OperandToken(Math.pow(leftOperand.getNumber(), rightOperand.getNumber())));
+                        case Sum:
+                            stack.push(new OperandToken(leftOperand.getNumber() + rightOperand.getNumber()));
+                        break;
+                        case Subtract:
+                            stack.push(new OperandToken(leftOperand.getNumber() - rightOperand.getNumber()));
+                        break;
+                        case Multiply:
+                            stack.push(new OperandToken(leftOperand.getNumber() * rightOperand.getNumber()));
+                        break;
+                        case Divide:
+                            stack.push(new OperandToken(leftOperand.getNumber() / rightOperand.getNumber()));
+                        break;
+                        case Power:
+                            stack.push(new OperandToken(Math.pow(leftOperand.getNumber(), rightOperand.getNumber())));
+                        break;
                     }
-                }
-                case Enums.TokenType.Dice -> {
-                    var rightOperand = ((DiceToken)token).getHasStaticEdges() ? null :(OperandToken) stack.pop();
-                    var leftOperand = ((DiceToken)token).getIsSingleDie() ? null : (OperandToken) stack.pop();
+                break;
+                case Dice:
+                    rightOperand = ((DiceToken)token).getHasStaticEdges() ? null :(OperandToken) stack.pop();
+                    leftOperand = ((DiceToken)token).getIsSingleDie() ? null : (OperandToken) stack.pop();
 
-                    var diceResult = DiceEvaluator.evaluateDice((DiceToken) token, leftOperand, rightOperand);
+                    DiceEvalutationResult diceResult = DiceEvaluator.evaluateDice((DiceToken) token, leftOperand, rightOperand);
                     this._diceResults.add(diceResult);
                     stack.push(new OperandToken(diceResult.sum));
-                }
+                break;
             }
         }
 
-        var result = stack.pop();
+        IToken result = stack.pop();
         if (result instanceof OperandToken){
             return ((OperandToken) result).getNumber();
         }
