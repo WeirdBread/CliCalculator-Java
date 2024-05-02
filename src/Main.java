@@ -15,23 +15,24 @@ public class Main {
     public static void main(String[] args) throws OperationNotSupportedException {
         Scanner scanner = new Scanner(System.in);
 
-        String input = scanner.nextLine();
+        while (true) {
+            String input = scanner.nextLine();
+            if (input.isEmpty()){
+                return;
+            }
 
-        if (input == null){
-            return;
+            Tokenizer tokenizer = new Tokenizer(input);
+            ArrayList<IToken> tokens = tokenizer.getResult();
+            System.out.println(String.join(", ", tokens.stream().map(Object::toString).collect(Collectors.toList())));
+
+            ArrayList<IToken> polishTokens = PolishNotator.PolandizeTokens(tokens);
+            System.out.println(String.join(", ", polishTokens.stream().map(Object::toString).collect(Collectors.toList())));
+
+            Evaluator evaluator = new Evaluator(polishTokens);
+            DecimalFormat format = new DecimalFormat("0.#", new DecimalFormatSymbols(Locale.US));
+            System.out.println(format.format(evaluator.EvaluateExpression()));
+
+            System.out.println(String.join("; ", evaluator.getDiceResults().stream().map(Object::toString).collect(Collectors.toList())));
         }
-
-        Tokenizer tokenizer = new Tokenizer(input);
-        ArrayList<IToken> tokens = tokenizer.getResult();
-        System.out.println(String.join(", ", tokens.stream().map(Object::toString).collect(Collectors.toList())));
-
-        ArrayList<IToken> polishTokens = PolishNotator.PolandizeTokens(tokens);
-        System.out.println(String.join(", ", polishTokens.stream().map(Object::toString).collect(Collectors.toList())));
-
-        Evaluator evaluator = new Evaluator(polishTokens);
-        DecimalFormat format = new DecimalFormat("0.#", new DecimalFormatSymbols(Locale.US));
-        System.out.println(format.format(evaluator.EvaluateExpression()));
-
-        System.out.println(String.join("; ", evaluator.getDiceResults().stream().map(Object::toString).collect(Collectors.toList())));
     }
 }
