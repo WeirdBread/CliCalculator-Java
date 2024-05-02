@@ -17,7 +17,7 @@ public class BinaryOperatorToken implements IOperator{
         this._priority = calcPriority(this._operatorType);
     }
 
-    private OperatorType _operatorType;
+    private final OperatorType _operatorType;
     public OperatorType getOperatorType(){
         return this._operatorType;
     }
@@ -26,12 +26,12 @@ public class BinaryOperatorToken implements IOperator{
         return Enums.TokenType.BinaryOperator;
     }
 
-    private String _symbol;
+    private final String _symbol;
     public String getSymbol(){
         return this._symbol;
     }
 
-    private int _priority;
+    private final int _priority;
     public int getPriority(){
         return this._priority;
     }

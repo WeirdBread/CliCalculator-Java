@@ -26,4 +26,13 @@ public class DiceResultList extends ArrayList<ArrayList<Integer>> {
     public void add(int item){
         this.getLastGroup().add(item);
     }
+
+    @Override
+    public String toString(){
+        var diceRolledString = new StringBuilder();
+        for (var item : this){
+            diceRolledString.append(String.format("[%s]", String.join(", ", item.stream().map(Object::toString).toList())));
+        }
+        return diceRolledString.toString();
+    }
 }

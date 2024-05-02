@@ -1,19 +1,28 @@
 package Tokenizer;
 
+import Evaluator.DiceEvalutationResult;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class DiceToken implements IOperator{
     public  static final String[] availableModifiersTags = { "rkh", "rkl", "kh", "kl", "!", "<", ">" };
 
-    public DiceToken(boolean isSingleDie) {
+    public DiceToken(boolean isSingleDie, boolean hasStaticEdges) {
         this.modificators = new ArrayList<DiceModificator>();
         this._isSingleDie = isSingleDie;
+        this._hasStaticEdges = hasStaticEdges;
     }
 
-    private boolean _isSingleDie;
+    private final boolean _isSingleDie;
     public boolean getIsSingleDie(){
         return  this._isSingleDie;
+    }
+
+    private final boolean _hasStaticEdges;
+    public boolean getHasStaticEdges() {
+        return this._hasStaticEdges;
     }
 
     public List<DiceModificator> modificators;
@@ -35,6 +44,18 @@ public class DiceToken implements IOperator{
         return this.getSymbol();
     }
 
+    public DiceEvalutationResult rollDice(int diceToRoll, int edges){
+        var rnd = new Random();
+        var result = new DiceEvalutationResult();
+        for (var i = 0; i < diceToRoll; i++){
+            var rollResult = rnd.nextInt(1, edges+1);
+            result.diceRolled.add(rollResult);
+            result.sum += rollResult;
+        }
+        result.expression = diceToRoll + "d" + edges;
+        return result;
+    }
+
     public DiceModificator addModificator(String modificator){
         return this.addModificator(modificator, null);
     }
@@ -45,7 +66,7 @@ public class DiceToken implements IOperator{
             case "kl" -> new DiceModificator(DiceModificatorType.KeepLow, param, false);
             case "rkh" -> new DiceModificator(DiceModificatorType.RerollKeepHigh, param, true);
             case "rkl" -> new DiceModificator(DiceModificatorType.RerollKeepLow, param, true);
-            case "!" -> new DiceModificator(DiceModificatorType.Explosive, param, false);
+            case "!" -> new DiceModificator(DiceModificatorType.Explosive, param, true);
             case "<" -> new DiceModificator(DiceModificatorType.LessThan, param, false);
             case ">" -> new DiceModificator(DiceModificatorType.MoreThan, param, false);
             default -> null;

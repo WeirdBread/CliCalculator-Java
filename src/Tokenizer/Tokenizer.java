@@ -2,6 +2,8 @@ package Tokenizer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 
 public class Tokenizer {
     private final ArrayList<String> tokens = new ArrayList<String>();
@@ -56,8 +58,7 @@ public class Tokenizer {
         Integer diceModBuffer = null;
         for (int i = 0; i < this.tokens.size(); i++) {
             switch (this.tokens.get(i)){
-                case String t when tryParseDouble(t) != null
-                        && (result.size() < 2 || !(result.get(result.size() - 2) instanceof DiceToken)):
+                case String t when tryParseDouble(t) != null && getDiceTokenIfLast(result) == null:
                     result.add(new OperandToken(Double.parseDouble(t)));
                     break;
                 case String t when t.equals("-") && (result.isEmpty()
@@ -73,26 +74,21 @@ public class Tokenizer {
                 case ")":
                     result.add(new CloseParenthesisToken());
                     break;
-                case "d":
+                case String t when t.startsWith("dF"):
                     var isSingleDie = result.isEmpty() || !(result.getLast() instanceof OperandToken);
-                    result.add(new DiceToken(isSingleDie));
+                    result.add(new FudgeDiceToken(isSingleDie));
+                    addDiceModificators(t.substring(2), result, diceModBuffer);
+                    break;
+                case "d":
+                    isSingleDie = result.isEmpty() || !(result.getLast() instanceof OperandToken);
+                    result.add(new DiceToken(isSingleDie, false));
                     break;
                 case String t when Arrays.stream(DiceToken.availableModifiersTags).anyMatch(t::contains):
-                    var mods = parseDiceMods(t);
-                    var prevToken = result.size() < 2 ? null : result.get(result.size() - 2);
-                    if (prevToken instanceof DiceToken prevDiceToken){
-                        for (var mod : mods){
-                            var newMod = prevDiceToken.addModificator(mod);
-                            if (newMod != null && newMod.getIsLeftOriented()){
-                                newMod.param = diceModBuffer;
-                                diceModBuffer = null;
-                            }
-                        }
-                    }
+                    addDiceModificators(t, result, diceModBuffer);
                     break;
                 case String t when tryParseInt(t) != null:
-                    prevToken = result.size() < 2 ? null : result.get(result.size() - 2);
-                    if (prevToken instanceof DiceToken prevDiceToken){
+                    var prevDiceToken = getDiceTokenIfLast(result);
+                    if (prevDiceToken != null){
                         var diceMod = prevDiceToken.modificators.isEmpty() ? null : prevDiceToken.modificators.getLast();
                         if (diceMod != null && !diceMod.getIsLeftOriented()){
                             diceMod.param = Integer.parseInt(t);
@@ -115,14 +111,41 @@ public class Tokenizer {
         if (mod.isEmpty()){
             return result;
         }
-
         result.add(mod.get());
         var restOfInput = input.substring(mod.get().length());
         if (!restOfInput.isEmpty()){
             result.addAll(parseDiceMods(restOfInput));
         }
-
         return result;
+    }
+
+    private static void addDiceModificators(String input, ArrayList<IToken> tokens, Integer diceModBuffer){
+        var mods = parseDiceMods(input);
+        var prevDiceToken = getDiceTokenIfLast(tokens);
+        for (var mod : mods){
+            var newMod = prevDiceToken.addModificator(mod);
+            if (newMod != null && newMod.getIsLeftOriented()){
+                newMod.param = diceModBuffer;
+                diceModBuffer = null;
+            }
+        }
+    }
+
+    private static DiceToken getDiceTokenIfLast(ArrayList<IToken> tokens){
+        if (tokens.isEmpty()){
+            return null;
+        }
+        var lastToken = tokens.getLast();
+        if (lastToken instanceof DiceToken diceToken && diceToken.getHasStaticEdges()) {
+            return diceToken;
+        }
+        if (tokens.size() > 1){
+            var secondLastToken = tokens.get(tokens.size() - 2);
+            if (secondLastToken instanceof DiceToken diceToken && !diceToken.getHasStaticEdges()){
+                return diceToken;
+            }
+        }
+        return null;
     }
 
     private Integer tryParseInt(String string){

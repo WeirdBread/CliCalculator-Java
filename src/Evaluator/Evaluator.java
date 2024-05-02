@@ -44,7 +44,7 @@ public class Evaluator {
                     }
                 }
                 case Enums.TokenType.Dice -> {
-                    var rightOperand = (OperandToken) stack.pop();
+                    var rightOperand = ((DiceToken)token).getHasStaticEdges() ? null :(OperandToken) stack.pop();
                     var leftOperand = ((DiceToken)token).getIsSingleDie() ? null : (OperandToken) stack.pop();
 
                     var diceResult = DiceEvaluator.evaluateDice((DiceToken) token, leftOperand, rightOperand);
