@@ -1,10 +1,9 @@
-import evaluator.DebugEvaluationLogger;
 import evaluator.EvaluationLogger;
 import evaluator.IEvaluationLogger;
 import evaluator.TokenEvaluator;
 import tokenFactory.TokenFactory;
-import tokenizer.TokenCollection;
-import tokenizer.Tokenizer;
+import tokenizert.TokenCollection;
+import tokenizert.Tokenizer;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -15,7 +14,6 @@ public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        boolean isDebug = false;
         while (true) {
             String input = scanner.nextLine();
             if (input.isEmpty()){

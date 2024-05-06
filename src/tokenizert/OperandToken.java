@@ -1,4 +1,4 @@
-package tokenizer;
+package tokenizert;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;

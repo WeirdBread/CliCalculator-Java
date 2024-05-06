@@ -1,7 +1,7 @@
 package tokenFactory;
 
-import tokenizer.FudgeDiceToken;
-import tokenizer.IToken;
+import tokenizert.FudgeDiceToken;
+import tokenizert.IToken;
 import utils.Predicate;
 
 import java.util.Collections;

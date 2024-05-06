@@ -1,4 +1,4 @@
-package tokenizer;
+package tokenizert;
 
 public interface ITokenizer {
     TokenCollection generateTokens();

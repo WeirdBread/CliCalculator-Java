@@ -1,4 +1,4 @@
-package tokenizer;
+package tokenizert;
 
 import evaluator.DebugEvaluationLogger;
 import evaluator.IEvaluator;

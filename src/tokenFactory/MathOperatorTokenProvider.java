@@ -1,7 +1,7 @@
 package tokenFactory;
 
-import tokenizer.IToken;
-import tokenizer.MathOperatorToken;
+import tokenizert.IToken;
+import tokenizert.MathOperatorToken;
 import utils.Predicate;
 
 import java.util.Arrays;

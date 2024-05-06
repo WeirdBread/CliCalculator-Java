@@ -1,7 +1,7 @@
 package evaluator;
 
-import tokenizer.IToken;
-import tokenizer.TokenCollection;
+import tokenizert.IToken;
+import tokenizert.TokenCollection;
 
 import javax.naming.LimitExceededException;
 import java.util.Stack;

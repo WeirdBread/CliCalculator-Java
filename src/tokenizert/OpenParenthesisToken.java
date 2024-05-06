@@ -1,13 +1,12 @@
-package tokenizer;
+package tokenizert;
 
-public class CloseParenthesisToken implements IToken{
-
+public class OpenParenthesisToken implements IToken{
     public String getSymbol(){
-        return ")";
+        return "(";
     }
 
     public Enums.TokenType getTokenType(){
-        return Enums.TokenType.CloseParenthesis;
+        return Enums.TokenType.OpenParenthesis;
     }
 
     @Override
