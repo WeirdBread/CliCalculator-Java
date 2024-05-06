@@ -5,6 +5,7 @@ import evaluator.IDiceEvaluator;
 import evaluator.IEvaluationLogger;
 import evaluator.IEvaluator;
 
+import javax.naming.LimitExceededException;
 import java.util.Random;
 import java.util.Stack;
 
@@ -16,7 +17,7 @@ public class FudgeDiceToken extends CommonDiceToken {
     }
 
     @Override
-    public void doOperation(IEvaluator evaluator) {
+    public void doOperation(IEvaluator evaluator) throws LimitExceededException {
         IDiceEvaluator diceEvaluator = (IDiceEvaluator) evaluator;
         Stack<IToken> stack = evaluator.getEvaluationStack();
 

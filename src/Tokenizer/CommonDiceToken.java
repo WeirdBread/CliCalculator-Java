@@ -5,6 +5,7 @@ import evaluator.IDiceEvaluator;
 import evaluator.IEvaluationLogger;
 import evaluator.IEvaluator;
 
+import javax.naming.LimitExceededException;
 import java.util.*;
 
 public class CommonDiceToken implements IOperator{
@@ -38,7 +39,7 @@ public class CommonDiceToken implements IOperator{
         return 5;
     }
 
-    public void doOperation(IEvaluator evaluator) {
+    public void doOperation(IEvaluator evaluator) throws LimitExceededException {
         IDiceEvaluator diceEvaluator = (IDiceEvaluator) evaluator;
         Stack<IToken> stack = evaluator.getEvaluationStack();
 

@@ -3,10 +3,14 @@ package evaluator;
 import tokenizer.*;
 import tokenizer.Enums.TokenType;
 
+import javax.naming.LimitExceededException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class TokenEvaluator implements IDiceEvaluator{
+    private final int _operationsLimit = 20;
+    private int operationCounter = 0;
+
     private final TokenCollection rpnTokens;
     private final ITokenizer tokenizer;
     private IEvaluationLogger logger;
@@ -72,7 +76,7 @@ public class TokenEvaluator implements IDiceEvaluator{
         this.seedForRandom = seed;
     }
 
-    public double evaluate() {
+    public double evaluate() throws LimitExceededException {
         this.expressionModificatorTokens.forEach(x -> x.applyExpressionMod(this));
         this.evaluationStack = new Stack<>();
         for (IToken token : this.rpnTokens){
@@ -86,6 +90,7 @@ public class TokenEvaluator implements IDiceEvaluator{
                     || tokenType == TokenType.MathOperator){
                 IOperator operatorToken = (IOperator)token;
                 operatorToken.doOperation(this);
+                this.incrementOperationCounter();
                 continue;
             }
         }
@@ -153,7 +158,7 @@ public class TokenEvaluator implements IDiceEvaluator{
         return result;
     }
 
-    public DiceEvaluationResult evaluateDice(CommonDiceToken diceToken, OperandToken leftOperand, OperandToken rightOperand) {
+    public DiceEvaluationResult evaluateDice(CommonDiceToken diceToken, OperandToken leftOperand, OperandToken rightOperand) throws LimitExceededException {
         return evaluateDice(diceToken, leftOperand == null ? 1 : (int) leftOperand.getNumber(), rightOperand == null ? 1 : (int) rightOperand.getNumber(), diceToken.modificators);
     }
 
@@ -161,11 +166,10 @@ public class TokenEvaluator implements IDiceEvaluator{
             CommonDiceToken diceToken,
             int diceToRoll,
             int edges,
-            List<CommonDiceToken.DiceModificator> modificators){
+            List<CommonDiceToken.DiceModificator> modificators) throws LimitExceededException {
         DiceEvaluationResult rollResult = diceToken.rollDice(this.getRandom(), diceToRoll, edges);
-
         List<CommonDiceToken.DiceModificator> orderedModificators = modificators.stream().sorted((x, y) -> y.getPriority() - x.getPriority()).collect(Collectors.toList());
-
+        this.incrementOperationCounter();
         for (CommonDiceToken.DiceModificator mod : orderedModificators){
             switch (mod.getType()){
                 case KeepHigh:
@@ -233,5 +237,12 @@ public class TokenEvaluator implements IDiceEvaluator{
         }
 
         return rollResult;
+    }
+
+    private void incrementOperationCounter() throws LimitExceededException {
+        if (this.operationCounter >= this._operationsLimit){
+            throw new LimitExceededException("Operations limit has been reached");
+        }
+        this.operationCounter++;
     }
 }
