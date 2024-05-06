@@ -8,7 +8,19 @@ import evaluator.IEvaluator;
 import java.util.*;
 
 public class CommonDiceToken implements IOperator{
-    public  static final String[] availableModifiersTags = { "rkh", "rkl", "kh", "kl", "!", "<", ">" };
+    public  static final Map<String, DiceModificatorType> availableModifiersTags = new HashMap<String, DiceModificatorType>(){
+        {
+            put("rkh", DiceModificatorType.RerollKeepHigh);
+            put("rkl", DiceModificatorType.RerollKeepLow);
+            put("kh", DiceModificatorType.KeepHigh);
+            put("kl", DiceModificatorType.KeepLow);
+            put("!", DiceModificatorType.Explosive);
+            put("<", DiceModificatorType.LessThan);
+            put(">", DiceModificatorType.MoreThan);
+            put("max", DiceModificatorType.MaxPossible);
+            put("min", DiceModificatorType.MinPossible);
+        }
+    };
 
     public boolean isSingleDie;
 
@@ -70,31 +82,15 @@ public class CommonDiceToken implements IOperator{
     }
 
     public DiceModificator addModificator(String modificator, Integer param){
-        DiceModificator newModificator = null;
-        switch (modificator){
-            case "kh": newModificator = new DiceModificator(DiceModificatorType.KeepHigh, param);
-            break;
-            case "kl": newModificator = new DiceModificator(DiceModificatorType.KeepLow, param);
-            break;
-            case "rkh": newModificator = new DiceModificator(DiceModificatorType.RerollKeepHigh, param);
-            break;
-            case "rkl": newModificator = new DiceModificator(DiceModificatorType.RerollKeepLow, param);
-            break;
-            case "!": newModificator = new DiceModificator(DiceModificatorType.Explosive, param);
-            break;
-            case "<": newModificator = new DiceModificator(DiceModificatorType.LessThan, param);
-            break;
-            case ">": newModificator = new DiceModificator(DiceModificatorType.MoreThan, param);
-            break;
+        DiceModificatorType targetType = availableModifiersTags.get(modificator);
+        DiceModificator newModificator = new DiceModificator(targetType, param);
+
+        // Не добавляем моды того же приоритета.
+        if (this.modificators.stream().anyMatch(x -> x.getPriority() == newModificator.getPriority())){
+            return null;
         }
 
-        if (newModificator != null) {
-            DiceModificator finalNewModificator = newModificator;
-            if (this.modificators.stream().anyMatch(x -> x.getPriority() == finalNewModificator.getPriority())){
-                return null;
-            }
-            this.modificators.add(newModificator);
-        }
+        this.modificators.add(newModificator);
         return newModificator;
     }
 
@@ -129,6 +125,8 @@ public class CommonDiceToken implements IOperator{
                 case RerollKeepLow:
                     return 2;
                 case Explosive:
+                case MaxPossible:
+                case MinPossible:
                     return 3;
                 default: return -1;
             }
@@ -142,33 +140,27 @@ public class CommonDiceToken implements IOperator{
         RerollKeepLow,
         Explosive,
         LessThan,
-        MoreThan
-    }
-
-    public static String getDiceModificatorDescription(DiceModificatorType type) {
-        switch (type) {
-            case KeepHigh: return "kh";
-            case KeepLow: return "kl";
-            case LessThan: return "<";
-            case MoreThan: return ">";
-            case Explosive: return "!";
-            case RerollKeepLow: return "rkl";
-            case RerollKeepHigh: return "rkh";
-            default: return null;
-        }
+        MoreThan,
+        MaxPossible,
+        MinPossible,
     }
 
     public static ArrayList<String> parseDiceMods(String input){
         ArrayList<String> result = new ArrayList<>();
-        Optional<String> mod = Arrays.stream(CommonDiceToken.availableModifiersTags).filter(input::contains).findFirst();
+        Optional<Map.Entry<String, DiceModificatorType>> mod = CommonDiceToken.availableModifiersTags.entrySet().stream().filter((k) -> input.startsWith(k.getKey())).findFirst();
         if (!mod.isPresent()){
             return result;
         }
-        result.add(mod.get());
-        String restOfInput = input.substring(mod.get().length());
+        String key = mod.get().getKey();
+        result.add(key);
+        String restOfInput = input.substring(key.length());
         if (!restOfInput.isEmpty()){
             result.addAll(parseDiceMods(restOfInput));
         }
         return result;
+    }
+
+    public static String getDiceModificatorDescription(DiceModificatorType modType) {
+        return availableModifiersTags.entrySet().stream().filter(x -> x.getValue().equals(modType)).findFirst().get().getKey();
     }
 }

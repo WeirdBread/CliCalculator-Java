@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TokenEvaluator implements IDiceEvaluator{
-    public final TokenCollection rpnTokens;
+    private final TokenCollection rpnTokens;
     private final ITokenizer tokenizer;
     private IEvaluationLogger logger;
     private Random _random;
@@ -37,6 +37,11 @@ public class TokenEvaluator implements IDiceEvaluator{
     }
 
     private Stack<IToken> evaluationStack;
+
+    public TokenCollection getTokens() {
+        return this.rpnTokens;
+    }
+
     public Stack<IToken> getEvaluationStack(){
         return this.evaluationStack;
     }
@@ -68,6 +73,7 @@ public class TokenEvaluator implements IDiceEvaluator{
     }
 
     public double evaluate() {
+        this.expressionModificatorTokens.forEach(x -> x.applyExpressionMod(this));
         this.evaluationStack = new Stack<>();
         for (IToken token : this.rpnTokens){
             TokenType tokenType = token.getTokenType();
@@ -211,6 +217,15 @@ public class TokenEvaluator implements IDiceEvaluator{
                         rollResult.diceRolled.getPrimaryGroup().addAll(newRoll.diceRolled.getPrimaryGroup());
                         rollResult.sum += newRoll.sum;
                     }
+                    break;
+                //TODO: разобраться с иммутабельностью Integer.
+                case MaxPossible:
+                    rollResult.diceRolled.getPrimaryGroup().forEach(x -> x = edges);
+                    rollResult.sum = diceToRoll * edges;
+                    break;
+                case MinPossible:
+                    rollResult.diceRolled.getPrimaryGroup().forEach(x -> x = 1);
+                    rollResult.sum = edges;
                     break;
             }
 

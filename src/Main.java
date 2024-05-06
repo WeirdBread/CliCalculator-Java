@@ -22,7 +22,7 @@ public class Main {
                 return;
             }
 
-            IEvaluationLogger evaluationLogger = isDebug ? new DebugEvaluationLogger() : new EvaluationLogger();
+            IEvaluationLogger evaluationLogger = new EvaluationLogger();
 
             Tokenizer tokenizer = new Tokenizer(input, TokenFactory.getInstance());
             TokenCollection tokens = tokenizer.generateTokens();
@@ -30,12 +30,12 @@ public class Main {
 
             try {
                 TokenEvaluator evaluator = new TokenEvaluator(tokenizer, evaluationLogger);
-                System.out.println(evaluator.rpnTokens);
+                System.out.println(evaluator.getTokens());
 
                 DecimalFormat format = new DecimalFormat("0.#####", new DecimalFormatSymbols(Locale.US));
                 System.out.println(format.format(evaluator.evaluate()));
 
-                System.out.println(evaluationLogger);
+                System.out.println(evaluator.getLogger());
 
             } catch (Exception ex)  {
                 System.out.println(ex.getMessage());

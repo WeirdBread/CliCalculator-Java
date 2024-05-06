@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 public class DiceResultCollection extends ArrayList<ArrayList<Integer>> {
     public DiceResultCollection(){
-        this.add(new ArrayList<Integer>());
+        this.add(new ArrayList<>());
         this.primaryGroupIndex = 0;
     }
 
