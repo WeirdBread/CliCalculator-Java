@@ -1,6 +1,6 @@
-package Tokenizer;
+package tokenizer;
 
 public interface IToken {
-    public String getSymbol();
-    public Enums.TokenType getTokenType();
+    String getSymbol();
+    Enums.TokenType getTokenType();
 }

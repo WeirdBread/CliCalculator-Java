@@ -1,10 +1,10 @@
-package Evaluator;
+package evaluator;
 
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-public class DiceResultList extends ArrayList<ArrayList<Integer>> {
-    public DiceResultList(){
+public class DiceResultCollection extends ArrayList<ArrayList<Integer>> {
+    public DiceResultCollection(){
         this.add(new ArrayList<Integer>());
         this.primaryGroupIndex = 0;
     }
@@ -19,7 +19,7 @@ public class DiceResultList extends ArrayList<ArrayList<Integer>> {
         return this.get(this.size() - 1);
     }
 
-    public ArrayList<Integer> addGroup(DiceResultList diceResult){
+    public ArrayList<Integer> addGroup(DiceResultCollection diceResult){
         this.addAll(diceResult);
         return this.getLastGroup();
     }

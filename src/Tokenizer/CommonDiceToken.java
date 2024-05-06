@@ -1,31 +1,18 @@
-package Tokenizer;
+package tokenizer;
 
-import Evaluator.DiceEvalutationResult;
+import evaluator.DiceEvaluationResult;
+import evaluator.IDiceEvaluator;
+import evaluator.IEvaluationLogger;
+import evaluator.IEvaluator;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
-public class DiceToken implements IOperator{
+public class CommonDiceToken implements IOperator{
     public  static final String[] availableModifiersTags = { "rkh", "rkl", "kh", "kl", "!", "<", ">" };
 
-    public DiceToken(boolean isSingleDie, boolean hasStaticEdges) {
-        this.modificators = new ArrayList<DiceModificator>();
-        this._isSingleDie = isSingleDie;
-        this._hasStaticEdges = hasStaticEdges;
-    }
+    public boolean isSingleDie;
 
-    private final boolean _isSingleDie;
-    public boolean getIsSingleDie(){
-        return  this._isSingleDie;
-    }
-
-    private final boolean _hasStaticEdges;
-    public boolean getHasStaticEdges() {
-        return this._hasStaticEdges;
-    }
-
-    public List<DiceModificator> modificators;
+    public List<DiceModificator> modificators = new ArrayList<>();
 
     public Enums.TokenType getTokenType(){
         return Enums.TokenType.Dice;
@@ -36,7 +23,26 @@ public class DiceToken implements IOperator{
     }
 
     public int getPriority(){
-        return 4;
+        return 5;
+    }
+
+    public void doOperation(IEvaluator evaluator) {
+        IDiceEvaluator diceEvaluator = (IDiceEvaluator) evaluator;
+        Stack<IToken> stack = evaluator.getEvaluationStack();
+
+        while (stack.peek() instanceof DiceModificatorToken){
+            this.addModificator((DiceModificatorToken)stack.pop());
+        }
+
+        OperandToken rightOperand = (OperandToken) stack.pop();
+        OperandToken leftOperand = this.isSingleDie ? null : (OperandToken) stack.pop();
+
+        DiceEvaluationResult diceResult = diceEvaluator.evaluateDice(this, leftOperand, rightOperand);
+        stack.push(new OperandToken(diceResult.sum));
+        IEvaluationLogger logger = evaluator.getLogger();
+        if (logger != null){
+            logger.logEvaluationResult(diceResult.toString());
+        }
     }
 
     @Override
@@ -44,8 +50,8 @@ public class DiceToken implements IOperator{
         return this.getSymbol();
     }
 
-    public DiceEvalutationResult rollDice(Random rnd, int diceToRoll, int edges){
-        DiceEvalutationResult result = new DiceEvalutationResult();
+    public DiceEvaluationResult rollDice(Random rnd, int diceToRoll, int edges){
+        DiceEvaluationResult result = new DiceEvaluationResult();
         for (int i = 0; i < diceToRoll; i++){
             int rollResult = rnd.nextInt(edges) + 1;
             result.diceRolled.add(rollResult);
@@ -55,6 +61,10 @@ public class DiceToken implements IOperator{
         return result;
     }
 
+    public DiceModificator addModificator(DiceModificatorToken modificator){
+        return this.addModificator(modificator.getSymbol(), modificator.parameter);
+    }
+
     public DiceModificator addModificator(String modificator){
         return this.addModificator(modificator, null);
     }
@@ -62,21 +72,21 @@ public class DiceToken implements IOperator{
     public DiceModificator addModificator(String modificator, Integer param){
         DiceModificator newModificator = null;
         switch (modificator){
-            case "kh": newModificator = new DiceModificator(DiceModificatorType.KeepHigh, param, false);
+            case "kh": newModificator = new DiceModificator(DiceModificatorType.KeepHigh, param);
             break;
-            case "kl": newModificator = new DiceModificator(DiceModificatorType.KeepLow, param, false);
+            case "kl": newModificator = new DiceModificator(DiceModificatorType.KeepLow, param);
             break;
-            case "rkh": newModificator = new DiceModificator(DiceModificatorType.RerollKeepHigh, param, true);
+            case "rkh": newModificator = new DiceModificator(DiceModificatorType.RerollKeepHigh, param);
             break;
-            case "rkl": newModificator = new DiceModificator(DiceModificatorType.RerollKeepLow, param, true);
+            case "rkl": newModificator = new DiceModificator(DiceModificatorType.RerollKeepLow, param);
             break;
-            case "!": newModificator = new DiceModificator(DiceModificatorType.Explosive, param, true);
+            case "!": newModificator = new DiceModificator(DiceModificatorType.Explosive, param);
             break;
-            case "<": newModificator = new DiceModificator(DiceModificatorType.LessThan, param, false);
+            case "<": newModificator = new DiceModificator(DiceModificatorType.LessThan, param);
             break;
-            case ">": newModificator = new DiceModificator(DiceModificatorType.MoreThan, param, false);
+            case ">": newModificator = new DiceModificator(DiceModificatorType.MoreThan, param);
             break;
-        };
+        }
 
         if (newModificator != null) {
             DiceModificator finalNewModificator = newModificator;
@@ -88,12 +98,11 @@ public class DiceToken implements IOperator{
         return newModificator;
     }
 
-    public class DiceModificator{
-        public DiceModificator(DiceModificatorType type, Integer param, Boolean isLeftOriented){
+    public static class DiceModificator{
+        public DiceModificator(DiceModificatorType type, Integer param){
             this._type = type;
             this.param = param;
             this._priority = calcPriority(type);
-            this._isLeftOriented = isLeftOriented;
         }
 
         private final DiceModificatorType _type;
@@ -106,11 +115,6 @@ public class DiceToken implements IOperator{
         private final int _priority;
         public int getPriority(){
             return this._priority;
-        }
-
-        private final boolean _isLeftOriented;
-        public boolean getIsLeftOriented(){
-            return this._isLeftOriented;
         }
 
         private int calcPriority(DiceModificatorType type){
@@ -132,7 +136,6 @@ public class DiceToken implements IOperator{
     }
 
     public enum DiceModificatorType{
-        None,
         KeepHigh,
         KeepLow,
         RerollKeepHigh,
@@ -153,5 +156,19 @@ public class DiceToken implements IOperator{
             case RerollKeepHigh: return "rkh";
             default: return null;
         }
+    }
+
+    public static ArrayList<String> parseDiceMods(String input){
+        ArrayList<String> result = new ArrayList<>();
+        Optional<String> mod = Arrays.stream(CommonDiceToken.availableModifiersTags).filter(input::contains).findFirst();
+        if (!mod.isPresent()){
+            return result;
+        }
+        result.add(mod.get());
+        String restOfInput = input.substring(mod.get().length());
+        if (!restOfInput.isEmpty()){
+            result.addAll(parseDiceMods(restOfInput));
+        }
+        return result;
     }
 }

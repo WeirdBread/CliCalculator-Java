@@ -1,16 +1,16 @@
-package Evaluator;
+package evaluator;
 
-public class DiceEvalutationResult{
+public class DiceEvaluationResult {
 
-    public DiceEvalutationResult(){
-        this.diceRolled = new DiceResultList();
+    public DiceEvaluationResult(){
+        this.diceRolled = new DiceResultCollection();
     }
 
     public String expression;
 
     public int sum;
 
-    public DiceResultList diceRolled;
+    public DiceResultCollection diceRolled;
 
     @Override
     public String toString(){

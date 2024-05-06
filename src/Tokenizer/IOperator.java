@@ -1,5 +1,8 @@
-package Tokenizer;
+package tokenizer;
+
+import evaluator.IEvaluator;
 
 public interface IOperator extends IToken {
-    public int getPriority();
+    int getPriority();
+    void doOperation(IEvaluator evaluator);
 }

@@ -1,13 +1,13 @@
-package Tokenizer;
+package tokenizer;
 
 public class Enums {
     public  enum TokenType{
-        Unknown,
         Operand,
-        UnaryOperator,
-        BinaryOperator,
+        MathOperator,
         OpenParenthesis,
         CloseParenthesis,
-        Dice
+        Dice,
+        DiceModificator,
+        ExpressionModificator
     }
 }

@@ -1,4 +1,4 @@
-package Tokenizer;
+package tokenizer;
 
 public class CloseParenthesisToken implements IToken{
 

@@ -1,181 +1,105 @@
-package Tokenizer;
+package tokenizer;
+
+import tokenFactory.ITokenFactory;
 
 import java.util.*;
 
-public class Tokenizer {
-    private final ArrayList<String> tokens = new ArrayList<String>();
+public class Tokenizer implements ITokenizer {
+    private final String inputExpression;
+    private final ITokenFactory tokenFactory;
 
-    public Tokenizer(String input){
-        Buffer buffer = new Buffer();
-        char[] expression = input.toCharArray();
-        for (int i = 0; i < expression.length; i++) {
-            if (Character.isWhitespace(expression[i])){
-                if (buffer.bufferString != null){
-                    this.tokens.add(buffer.toStringAndClear());
-                }
-                continue;
-            }
-
-            boolean charIsDigit = Character.isDigit(expression[i]);
-            boolean charIsLetter = Character.isLetter(expression[i]);
-            boolean charIsPoint = expression[i] == '.';
-
-            if ((charIsDigit || charIsLetter || charIsPoint) && expression[i] != 'd'){
-                if (buffer.bufferString == null){
-                    buffer.bufferString = String.valueOf(expression[i]);
-                    buffer.isNumber = charIsDigit;
-                    continue;
-                } else if ((buffer.isNumber && (charIsDigit || charIsPoint) || (!buffer.isNumber && charIsLetter))) {
-                    buffer.bufferString += expression[i];
-                    continue;
-                }
-            }
-
-            if (buffer.bufferString != null){
-                this.tokens.add(buffer.toStringAndClear());
-                if(charIsDigit || charIsLetter){
-                    buffer.bufferString = String.valueOf(expression[i]);
-                    buffer.isNumber = charIsDigit;
-                } else{
-                    tokens.add(String.valueOf(expression[i]));
-                }
-                continue;
-            }
-
-            tokens.add(String.valueOf(expression[i]));
-        }
-
-        if (buffer.bufferString != null) {
-            this.tokens.add(buffer.toStringAndClear());
-        }
+    public Tokenizer(String inputExpression, ITokenFactory tokenFactory){
+        this.inputExpression = inputExpression;
+        this.tokenFactory = tokenFactory;
     }
 
-    public  ArrayList<IToken> getResult() throws IllegalArgumentException{
-        ArrayList<IToken> result = new ArrayList<IToken>();
-        Integer diceModBuffer = null;
-        for (int i = 0; i < this.tokens.size(); i++) {
-            diceModBuffer = fillTokens(result, this.tokens, i, diceModBuffer);
-        }
-        return  result;
-    }
-
-    private Integer fillTokens(ArrayList<IToken> tokens, ArrayList<String> stringTokens, int index, Integer diceModBuffer){
-        String t = stringTokens.get(index);
-        if (tryParseDouble(t) != null && getDiceTokenIfLast(tokens) == null){
-            tokens.add(new OperandToken(Double.parseDouble(t)));
-            return diceModBuffer;
-        }
-        if (t.equals("-") && (tokens.isEmpty()
-                || !((tokens.get(tokens.size()-1) instanceof OperandToken) || (tokens.get(tokens.size()-1) instanceof CloseParenthesisToken)))) {
-            tokens.add(new UnaryOperatorToken());
-            return diceModBuffer;
-        }
-        if (Arrays.asList(BinaryOperatorToken.operatorSymbols).contains(t)){
-            tokens.add(new BinaryOperatorToken(t));
-            return diceModBuffer;
-        }
-        if (t.equals("(")){
-            tokens.add(new OpenParenthesisToken());
-            return diceModBuffer;
-        }
-        if (t.equals(")")){
-            tokens.add(new CloseParenthesisToken());
-            return diceModBuffer;
-        }
-        if (t.startsWith("dF")){
-            boolean isSingleDie = tokens.isEmpty() || !(tokens.get(tokens.size()-1) instanceof OperandToken);
-            tokens.add(new FudgeDiceToken(isSingleDie));
-            addDiceModificators(t.substring(2), tokens, diceModBuffer);
-            return null;
-        }
-        if (t.equals("d")){
-            boolean isSingleDie = tokens.isEmpty() || !(tokens.get(tokens.size()-1) instanceof OperandToken);
-            tokens.add(new DiceToken(isSingleDie, false));
-            return diceModBuffer;
-        }
-        if (Arrays.stream(DiceToken.availableModifiersTags).anyMatch(t::contains)){
-            addDiceModificators(t, tokens, diceModBuffer);
-            return null;
-        }
-        if (tryParseInt(t) != null) {
-            DiceToken prevDiceToken = getDiceTokenIfLast(tokens);
-            if (prevDiceToken != null){
-                DiceToken.DiceModificator diceMod = prevDiceToken.modificators.isEmpty() ? null : prevDiceToken.modificators.get(prevDiceToken.modificators.size() - 1);
-                if (diceMod != null && !diceMod.getIsLeftOriented()){
-                    diceMod.param = Integer.parseInt(t);
-                    return diceModBuffer;
+    public TokenCollection generateTokens() {
+        TokenCollection result = new TokenCollection();
+        List<String> splitedExpression = this.splitByTokens();
+        for (String s : splitedExpression) {
+            for (IToken token : this.tokenFactory.createTokens(s)){
+                if (token instanceof MathOperatorToken) {
+                    convertToUnaryIfNeeded(result, (MathOperatorToken)token);
                 }
-                return Integer.parseInt(t);
+                result.add(token);
             }
-            return diceModBuffer;
-        }
-        throw new IllegalArgumentException(String.format("Unexpected token: '%s', pos: %d:%d", t, index + 1, index + 1 + t.length()));
-    }
-
-    private static ArrayList<String> parseDiceMods(String input){
-        ArrayList<String> result = new ArrayList<String>();
-        Optional<String> mod = Arrays.stream(DiceToken.availableModifiersTags).filter(input::contains).findFirst();
-        if (!mod.isPresent()){
-            return result;
-        }
-        result.add(mod.get());
-        String restOfInput = input.substring(mod.get().length());
-        if (!restOfInput.isEmpty()){
-            result.addAll(parseDiceMods(restOfInput));
         }
         return result;
     }
 
-    private static void addDiceModificators(String input, ArrayList<IToken> tokens, Integer diceModBuffer){
-        ArrayList<String> mods = parseDiceMods(input);
-        DiceToken prevDiceToken = getDiceTokenIfLast(tokens);
-        for (String mod : mods){
-            DiceToken.DiceModificator newMod = prevDiceToken.addModificator(mod);
-            if (newMod != null && newMod.getIsLeftOriented()){
-                newMod.param = diceModBuffer;
-                diceModBuffer = null;
+    /**
+     * Преобразует математический оператор в унарный при необходимости.
+     */
+    private static void convertToUnaryIfNeeded(TokenCollection tokens, MathOperatorToken mathToken){
+        // Унарным может быть только минус и плюс.
+        if (mathToken.getOperatorType() != MathOperatorToken.OperatorType.Subtract
+                && mathToken.getOperatorType() != MathOperatorToken.OperatorType.Sum){
+            return;
+        }
+        if (tokens.isEmpty()) {
+            mathToken.convertToUnary();
+            return;
+        }
+        IToken prevToken = tokens.get(tokens.size() - 1);
+        if (prevToken instanceof MathOperatorToken) {
+            if (((MathOperatorToken)prevToken).isUnary()){
+                throw new IllegalArgumentException(); // Два унарных оператора не могут идти подряд.
             }
+            mathToken.convertToUnary();
+        }
+        if (prevToken instanceof OpenParenthesisToken) {
+            mathToken.convertToUnary();
         }
     }
 
-    private static DiceToken getDiceTokenIfLast(ArrayList<IToken> tokens){
-        if (tokens.isEmpty()){
-            return null;
+    private List<String> splitByTokens(){
+        ArrayList<String> tokens = new ArrayList<>();
+        Buffer buffer = new Buffer();
+        for (int i = 0; i < this.inputExpression.length(); i++){
+            resolveChar(this.inputExpression.charAt(i), tokens, buffer);
         }
-        IToken lastToken = tokens.get(tokens.size()-1);
-        if (lastToken instanceof DiceToken && ((DiceToken)lastToken).getHasStaticEdges()) {
-            return (DiceToken) lastToken;
+
+        buffer.popIntoList(tokens);
+        return tokens;
+    }
+
+    private static void resolveChar(char ch, List<String> tokens, Buffer buffer){
+        if (Character.isWhitespace(ch)){
+            buffer.popIntoList(tokens);
+            return;
         }
-        if (tokens.size() > 1){
-            IToken secondLastToken = tokens.get(tokens.size() - 2);
-            if (secondLastToken instanceof DiceToken && !((DiceToken)secondLastToken).getHasStaticEdges()){
-                return (DiceToken) secondLastToken;
+
+        boolean charIsDigit = Character.isDigit(ch);
+        boolean charIsLetter = Character.isLetter(ch);
+        boolean charIsPoint = ch == '.';
+
+        if (charIsDigit || charIsLetter || charIsPoint){
+            if (buffer.bufferString == null){
+                buffer.bufferString = String.valueOf(ch);
+                buffer.isNumber = charIsDigit;
+            } else if ((buffer.isNumber && (charIsDigit || charIsPoint)) || (!buffer.isNumber && charIsLetter)) {
+                buffer.bufferString += String.valueOf(ch);
+            } else {
+                buffer.popIntoList(tokens);
+                buffer.bufferString = String.valueOf(ch);
+                buffer.isNumber = charIsDigit;
             }
+            return;
         }
-        return null;
+
+        buffer.popIntoList(tokens);
+        tokens.add(String.valueOf(ch));
     }
 
-    private Integer tryParseInt(String string){
-        try {
-            return Integer.parseInt(string);
-        }
-        catch (NumberFormatException _) {
-            return null;
-        }
-    }
-
-    private Double tryParseDouble(String string){
-        try {
-            return Double.parseDouble(string);
-        }
-        catch (NumberFormatException _) {
-            return null;
-        }
-    }
-
-    private class Buffer{
+    private static class Buffer{
         public String bufferString = null;
         public boolean isNumber = false;
+
+        public void popIntoList(List<String> list){
+            if (bufferString != null){
+                list.add(this.toStringAndClear());
+            }
+        }
 
         public String toStringAndClear(){
             String result = this.bufferString;
