@@ -2,8 +2,8 @@ import evaluator.EvaluationLogger;
 import evaluator.IEvaluationLogger;
 import evaluator.TokenEvaluator;
 import tokenFactory.TokenFactory;
-import tokenizert.TokenCollection;
-import tokenizert.Tokenizer;
+import tokenizer.TokenCollection;
+import tokenizer.Tokenizer;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;

@@ -1,4 +1,4 @@
-package tokenizert;
+package tokenizer;
 
 import tokenFactory.ITokenFactory;
 

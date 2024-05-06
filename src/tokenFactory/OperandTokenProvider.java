@@ -1,7 +1,7 @@
 package tokenFactory;
 
-import tokenizert.IToken;
-import tokenizert.OperandToken;
+import tokenizer.IToken;
+import tokenizer.OperandToken;
 import utils.Helper;
 import utils.Predicate;
 

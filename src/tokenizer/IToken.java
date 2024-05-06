@@ -1,4 +1,4 @@
-package tokenizert;
+package tokenizer;
 
 public interface IToken {
     String getSymbol();

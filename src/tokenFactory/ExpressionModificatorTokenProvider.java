@@ -1,7 +1,7 @@
 package tokenFactory;
 
-import tokenizert.ExpressionModificatorToken;
-import tokenizert.IToken;
+import tokenizer.ExpressionModificatorToken;
+import tokenizer.IToken;
 import utils.Predicate;
 
 import java.util.Collections;

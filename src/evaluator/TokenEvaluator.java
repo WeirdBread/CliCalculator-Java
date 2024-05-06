@@ -1,7 +1,7 @@
 package evaluator;
 
-import tokenizert.*;
-import tokenizert.Enums.TokenType;
+import tokenizer.*;
+import tokenizer.Enums.TokenType;
 
 import javax.naming.LimitExceededException;
 import java.util.*;

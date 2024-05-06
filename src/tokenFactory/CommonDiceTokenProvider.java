@@ -1,7 +1,7 @@
 package tokenFactory;
 
-import tokenizert.CommonDiceToken;
-import tokenizert.IToken;
+import tokenizer.CommonDiceToken;
+import tokenizer.IToken;
 import utils.Predicate;
 
 import java.util.Collections;

@@ -1,7 +1,7 @@
 package evaluator;
 
-import tokenizert.CommonDiceToken;
-import tokenizert.OperandToken;
+import tokenizer.CommonDiceToken;
+import tokenizer.OperandToken;
 
 import javax.naming.LimitExceededException;
 

@@ -1,6 +1,6 @@
 package tokenFactory;
 
-import tokenizert.IToken;
+import tokenizer.IToken;
 import utils.Predicate;
 
 import java.util.List;

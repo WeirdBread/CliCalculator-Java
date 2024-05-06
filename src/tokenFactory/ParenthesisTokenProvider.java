@@ -1,8 +1,8 @@
 package tokenFactory;
 
-import tokenizert.CloseParenthesisToken;
-import tokenizert.IToken;
-import tokenizert.OpenParenthesisToken;
+import tokenizer.CloseParenthesisToken;
+import tokenizer.IToken;
+import tokenizer.OpenParenthesisToken;
 import utils.Predicate;
 
 import java.util.Collections;

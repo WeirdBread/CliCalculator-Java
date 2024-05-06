@@ -1,6 +1,6 @@
 package tokenFactory;
 
-import tokenizert.IToken;
+import tokenizer.IToken;
 
 import java.util.*;
 
